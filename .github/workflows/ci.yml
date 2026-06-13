@@ -1,0 +1,42 @@
+# Automated Build & Deploy Pipeline — matches resume:
+# triggers on every push to main, builds the Docker image, runs a smoke test,
+# verifies the container starts successfully.
+
+name: Build and Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t flask-app:${{ github.sha }} .
+
+      - name: Start container with Redis for smoke test
+        run: |
+          docker network create smoke-net
+          docker run -d --name redis --network smoke-net redis:7-alpine
+          docker run -d --name web --network smoke-net \
+            -e REDIS_HOST=redis -p 5000:5000 flask-app:${{ github.sha }}
+
+      - name: Smoke test — verify the container actually serves traffic
+        run: |
+          sleep 8
+          curl -f http://localhost:5000/health
+          curl -f http://localhost:5000/count
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs web
+
+      - name: Cleanup
+        if: always()
+        run: docker rm -f web redis || true
