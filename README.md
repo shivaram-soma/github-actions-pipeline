@@ -87,3 +87,13 @@ This is the whole point: the pipeline catches what unit tests can't (a broken `C
   if: github.ref == 'refs/heads/main'
   run: curl -X POST ${{ secrets.DEPLOY_HOOK }}
 ```
+## Documentation
+
+- [Architecture](ARCHITECTURE.md)
+- [Pipeline Documentation](PIPELINE.md)
+- [Runbook](RUNBOOK.md)
+
+## Workflow Files
+
+- .github/workflows/ci.yml
+- .github/workflows/pr-checks.yml
